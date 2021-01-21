@@ -1,0 +1,49 @@
+---
+- name: Generate password
+  no_log: true
+  set_fact:
+    user_password_generated: "{{ lookup('password', '/dev/null length=32') }}"
+  when:
+    - user_item.password == ""
+
+- name: "Setup user \"{{ user_item.user }}\""
+  become: yes
+  user:
+    name: "{{ user_item.user }}"
+    password: "{{ (user_item.password |length > 0) | ternary(user_item.password | password_hash('sha512'), user_password_generated | password_hash('sha512'), user_password_generated | password_hash('sha512')) }}"
+    update_password: "{{ user_item.update_password }}"
+    shell: "{{ user_item.shell }}"
+    groups: "{{ user_item.groups }}"
+  register: created_user
+
+- name: Save generated credentials
+  become: yes
+  blockinfile:
+    owner: root
+    group: root
+    mode: 0600
+    path: /credentials
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ user_item.user }}"
+    create: yes
+    block: |
+      Username: {{ user_item.user }}
+      Password: {{ user_password_generated }}
+  when:
+    - created_user is changed
+    - user_item.password == ""
+
+- name: "Add authorized keys to user \"{{ user_item.user }}\""
+  become: yes
+  authorized_key:
+    user: "{{ user_item.user }}"
+    state: present
+    key: "{{ user_item.authorized_keys }}"
+
+- name: "Add the user \"{{ user_item.user }}\" to the sudoers file"
+  become: yes
+  blockinfile:
+    path: /etc/sudoers
+    insertafter: ^\%sudo.*ALL=\(ALL:ALL\).*ALL$
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ user_item.user }}"
+    block: |
+      {{ user_item.user }} ALL=(ALL:ALL) NOPASSWD:ALL

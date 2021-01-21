@@ -128,49 +128,11 @@
       : "${LC_TELEPHONE:=de_DE.UTF-8}"; export LC_TELEPHONE
       : "${LC_TIME:=de_DE.UTF-8}"; export LC_TIME
 
-- name: Create user user
-  become: yes
-  user:
-    name: user
-    comment: default user
-    password: "{{ users['user']['password'] }}"
-    shell: "{{ users['user']['shell'] }}"
-    append: yes
-    groups:
-      - sudo
-
-- name: Add authorized keys to user user
-  become: yes
-  authorized_key:
-    user: user
-    state: present
-    key: "{{ users['user']['authorized_keys'] }}"
-
-- name: Create user ansible
-  become: yes
-  user:
-    name: ansible
-    comment: ansible deployment user
-    password: "{{ users['ansible']['password'] }}"
-    shell: "{{ users['ansible']['shell'] }}"
-    system: yes
-
-- name: Add authorized keys to user ansible
-  become: yes
-  authorized_key:
-    user: ansible
-    state: present
-    key: "{{ users['ansible']['authorized_keys'] }}"
-
-- name: Add the users 'ansible' and 'user' to the sudoers file
-  become: yes
-  blockinfile:
-    path: /etc/sudoers
-    insertafter: ^\%sudo.*ALL=\(ALL:ALL\).*ALL$
-    marker: "# {mark} ANSIBLE MANAGED BLOCK - locale"
-    block: |
-      ansible ALL=(ALL:ALL) NOPASSWD:ALL
-      user ALL=(ALL:ALL) NOPASSWD:ALL
+- name: Setup users
+  include_tasks: setup_user.yml
+  loop: "{{ users }}"
+  loop_control:
+    loop_var: user_item
 
 - name: Replace sshd_config
   become: yes
