@@ -1,0 +1,26 @@
+---
+# vars file for shokinn.base
+# shokinn.iptables configuration
+firewall_state: started
+firewall_enabled_at_boot: true
+
+firewall_allowed_tcp_ports:
+  - "22"
+firewall_allowed_udp_ports: []
+firewall_forwarded_tcp_ports: []
+firewall_forwarded_udp_ports: []
+firewall_additional_rules:
+  - "iptables -A INPUT -p icmp -m limit --limit 900/min -j ACCEPT"
+firewall_ip6_additional_rules:
+  - "ip6tables -A INPUT -p icmpv6 -m limit --limit 900/min -j ACCEPT"
+
+firewall_allow_incoming_icmp: false
+firewall_allow_ntp: true
+firewall_log_dropped_packets: true
+firewall_input_filter_policy: DROP
+firewall_forward_filter_policy: DROP
+firewall_output_filter_policy: ACCEPT
+
+## Set to true to ensure other firewall management software is disabled.
+firewall_disable_firewalld: true
+firewall_disable_ufw: true

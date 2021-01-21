@@ -1,0 +1,12 @@
+---
+# handlers file for shokinn.base
+- name: reboot
+  become: yes
+  reboot:
+  when: stat_reboot_needed.stat.exists == True
+
+- name: restart sshd
+  become: yes
+  service:
+    name: sshd
+    state: restarted

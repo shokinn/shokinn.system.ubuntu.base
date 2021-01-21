@@ -1,0 +1,212 @@
+---
+# tasks file for shokinn.base
+- name: Update machine
+  become: yes
+  apt:
+    update_cache: yes
+    upgrade: full
+    force_apt_get: yes
+  notify: reboot
+
+- name: Check if a reboot is required
+  become: yes
+  stat:
+    path: "/var/run/reboot-required"
+  register: stat_reboot_needed
+
+- name: Run Handlers
+  meta: flush_handlers
+
+- name: Replace ~/.bashrc
+  copy:
+    src: .bashrc
+    dest: ~/.bashrc
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0644
+
+- name: Add ~/.bash_aliases
+  copy:
+    src: .bash_aliases
+    dest: ~/.bash_aliases
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0644
+
+- name: Replace /root/.bashrc (if ansible_user is not root)
+  become: yes
+  copy:
+    src: .bashrc
+    dest: ~/.bashrc
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0644
+  when: ansible_user != "root"
+
+- name: Add /root/.bash_aliases (if ansible_user is not root)
+  become: yes
+  copy:
+    src: .bash_aliases
+    dest: ~/.bash_aliases
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0644
+  when: ansible_user != "root"
+
+- name: Replace /etc/skel/.bashrc
+  become: yes
+  copy:
+    src: .bashrc
+    dest: /etc/skel/.bashrc
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Add /etc/skel/.bash_aliases
+  become: yes
+  copy:
+    src: .bash_aliases
+    dest: /etc/skel/.bash_aliases
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Replace /etc/vim/vimrc
+  become: yes
+  copy:
+    src: vimrc
+    dest: /etc/vim/vimrc
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Generate locales
+  become: yes
+  locale_gen:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - en_US
+    - en_US.ISO-8859-15
+    - en_US.UTF-8
+    - en_GB
+    - en_GB.ISO-8859-15
+    - en_GB.UTF-8
+    - de_DE
+    - de_DE.UTF-8
+    - de_DE@euro
+
+- name: Set default locale to none
+  become: yes
+  copy:
+    src: default_locale
+    dest: /etc/default/locale
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Add fallback locale
+  become: yes
+  blockinfile:
+    path: /etc/profile
+    insertafter: EOF
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - locale"
+    block: |
+
+      # Set fallback locale
+      : "${LANG:=en_US.utf8}"; export LANG
+      : "${LANGUAGE:=en_US:en}"; export LANGUAGE
+      : "${LC_ADDRESS:=de_DE.UTF-8}"; export LC_ADDRESS
+      : "${LC_COLLATE:=de_DE.UTF-8}"; export LC_COLLATE
+      : "${LC_CTYPE:=de_DE.UTF-8}"; export LC_CTYPE
+      : "${LC_MONETARY:=de_DE.UTF-8}"; export LC_MONETARY
+      : "${LC_MEASUREMENT:=de_DE.UTF-8}"; export LC_MEASUREMENT
+      : "${LC_MESSAGES:=en_US.utf8}"; export LC_MESSAGES
+      : "${LC_NUMERIC:=de_DE.UTF-8}"; export LC_NUMERIC
+      : "${LC_PAPER:=de_DE.UTF-8}"; export LC_PAPER
+      : "${LC_RESPONSE:=en_US.utf8}"; export LC_RESPONSE
+      : "${LC_TELEPHONE:=de_DE.UTF-8}"; export LC_TELEPHONE
+      : "${LC_TIME:=de_DE.UTF-8}"; export LC_TIME
+
+- name: Create user user
+  become: yes
+  user:
+    name: user
+    comment: default user
+    password: "{{ users['user']['password'] }}"
+    shell: "{{ users['user']['shell'] }}"
+    append: yes
+    groups:
+      - sudo
+
+- name: Add authorized keys to user user
+  become: yes
+  authorized_key:
+    user: user
+    state: present
+    key: "{{ users['user']['authorized_keys'] }}"
+
+- name: Create user ansible
+  become: yes
+  user:
+    name: ansible
+    comment: ansible deployment user
+    password: "{{ users['ansible']['password'] }}"
+    shell: "{{ users['ansible']['shell'] }}"
+    system: yes
+
+- name: Add authorized keys to user ansible
+  become: yes
+  authorized_key:
+    user: ansible
+    state: present
+    key: "{{ users['ansible']['authorized_keys'] }}"
+
+- name: Add the users 'ansible' and 'user' to the sudoers file
+  become: yes
+  blockinfile:
+    path: /etc/sudoers
+    insertafter: ^\%sudo.*ALL=\(ALL:ALL\).*ALL$
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - locale"
+    block: |
+      ansible ALL=(ALL:ALL) NOPASSWD:ALL
+      user ALL=(ALL:ALL) NOPASSWD:ALL
+
+- name: Replace sshd_config
+  become: yes
+  copy:
+    src: sshd_config
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart sshd
+
+- name: Install standard software
+  become: yes
+  apt:
+    name: "{{ packages }}"
+    force_apt_get: yes
+  vars:
+    packages:
+    - apt-transport-https
+    - bzip2
+    - ca-certificates
+    - curl
+    - git
+    - htop
+    - jq
+    - lsb-release
+    - mc
+    - net-tools
+    - p7zip-full
+    - rename
+    - screen
+    - software-properties-common
+    - ssl-cert
+    - tmux
+    - unzip
+    - vim
+    - wget
+    - zip
+  notify: reboot
