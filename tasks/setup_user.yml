@@ -22,7 +22,7 @@
     owner: root
     group: root
     mode: 0600
-    path: /credentials
+    path: /root/credentials
     marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ user_item.user }}"
     create: yes
     block: |
