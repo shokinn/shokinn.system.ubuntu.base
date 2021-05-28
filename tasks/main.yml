@@ -151,6 +151,7 @@
     force_apt_get: yes
   vars:
     packages:
+    - acl
     - apt-transport-https
     - bzip2
     - ca-certificates
@@ -158,6 +159,7 @@
     - git
     - htop
     - jq
+    - libacl1
     - lsb-release
     - mc
     - net-tools
