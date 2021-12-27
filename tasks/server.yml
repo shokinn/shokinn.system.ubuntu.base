@@ -1,0 +1,19 @@
+---
+# tasks file for shokinn.base_ubuntu_18_04_lts
+- name: Add mosh repos
+  become: yes
+  apt_repository:
+    repo: ppa:keithw/mosh
+    state: present
+    update_cache: yes
+  when:
+    ansible_distribution_major_version == '18.04'
+
+- name: Install mosh
+  become: yes
+  apt:
+    name: "{{ packages }}"
+    force_apt_get: yes
+  vars:
+    packages:
+      - mosh

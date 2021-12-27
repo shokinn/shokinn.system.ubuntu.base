@@ -162,6 +162,7 @@
     - mc
     - net-tools
     - p7zip-full
+    - p7zip-rar
     - rename
     - screen
     - software-properties-common
@@ -172,3 +173,20 @@
     - wget
     - zip
   notify: reboot
+
+- name: Install server software
+  include_tasks: server.yml
+  when: install_server_software | bool
+
+- name: Setup APU2 GRUB
+  include_tasks: setup_apu2_grub.yml
+  when: setup_apu2_grub | bool
+
+- name: Check if a reboot is required
+  become: yes
+  stat:
+    path: "/var/run/reboot-required"
+  register: stat_reboot_needed
+
+- name: Run Handlers
+  meta: flush_handlers

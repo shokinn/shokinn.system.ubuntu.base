@@ -10,3 +10,7 @@
   service:
     name: sshd
     state: restarted
+
+- name: update_grub
+  become: yes
+  command: update-grub2

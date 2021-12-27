@@ -1,0 +1,40 @@
+---
+# tasks file for shokinn.system.ubuntu.base.x86_64_server.apu2c4
+- name: Replace GRUB_CMDLINE_LINUX_DEFAULT
+  become: yes
+  replace:
+    path: /etc/default/grub
+    regexp: '^GRUB_CMDLINE_LINUX_DEFAULT=.*$'
+    replace: 'GRUB_CMDLINE_LINUX_DEFAULT=""'
+  notify: update_grub
+
+- name: Replace GRUB_CMDLINE_LINUX
+  become: yes
+  replace:
+    path: /etc/default/grub
+    regexp: '^GRUB_CMDLINE_LINUX=.*$'
+    replace: 'GRUB_CMDLINE_LINUX="console=tty0 console=ttyS0,115200,n8"'
+  notify: update_grub
+
+- name: Add GRUB_GFXPAYLOAD_LINUX
+  become: yes
+  lineinfile:
+    path: /etc/default/grub
+    line: 'GRUB_GFXPAYLOAD_LINUX="keep"'
+  notify: update_grub
+
+- name: Replace GRUB_TERMINAL
+  become: yes
+  replace:
+    path: /etc/default/grub
+    regexp: '^GRUB_TERMINAL=.*$'
+    replace: 'GRUB_TERMINAL=serial'
+  notify: update_grub
+
+- name: Add GRUB_SERIAL_COMMAND
+  become: yes
+  lineinfile:
+    path: /etc/default/grub
+    insertafter: "^GRUB_TERMINAL=serial$"
+    line: 'GRUB_SERIAL_COMMAND="serial --unit=0 --speed=115200 --word=8 --parity=no --stop=1"'
+  notify: update_grub

@@ -15,3 +15,7 @@ users:
     password: ""
     authorized_keys: ""
     shell: "/bin/bash"
+
+install_server_software: no
+
+setup_apu2_grub: no
