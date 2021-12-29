@@ -38,8 +38,8 @@
   copy:
     src: .bashrc
     dest: ~/.bashrc
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    owner: root
+    group: root
     mode: 0644
   when: ansible_user != "root"
 
@@ -48,8 +48,8 @@
   copy:
     src: .bash_aliases
     dest: ~/.bash_aliases
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    owner: root
+    group: root
     mode: 0644
   when: ansible_user != "root"
 
